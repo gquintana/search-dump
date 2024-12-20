@@ -1,0 +1,25 @@
+name: search-dump
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.26
+    ports:
+      - "9200:9200"
+    environment:
+      "discovery.type" : "single-node"
+      "xpack.security.enabled" : true
+      "ELASTIC_PASSWORD": "elastic"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+  opensearch:
+    image: opensearchproject/opensearch:1
+    ports:
+      - 9201:9200
+    environment:
+      "discovery.type" : "single-node"
+      "OPENSEARCH_PASSWORD": "admin"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+
+volumes:
+  elasticsearch-data:
+  opensearch-data:

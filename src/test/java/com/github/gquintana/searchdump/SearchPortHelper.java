@@ -2,7 +2,10 @@ package com.github.gquintana.searchdump;
 
 import com.github.gquintana.searchdump.core.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -45,7 +48,7 @@ public class SearchPortHelper {
         try (SearchDocumentReader reader = port.readDocuments(this.index)) {
             List<SearchDocument> docs = new ArrayList<>();
             reader.forEachRemaining(docs::add);
-            Collections.sort(docs, Comparator.comparing(SearchDocument::id));
+            docs.sort(Comparator.comparing(SearchDocument::id));
             assertEquals(15, docs.size());
             for (int i = 0; i < docs.size(); i++) {
                 SearchDocument doc = docs.get(i);

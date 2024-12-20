@@ -21,7 +21,7 @@ public class ElasticsearchWriter implements SearchWriter, QuietCloseable {
     private final int writeBulkSize;
     private final ElasticsearchClient client;
     private final JsonMapper jsonMapper;
-    private JacksonJsonpMapper jsonpMapper;
+    private final JacksonJsonpMapper jsonpMapper;
 
     public ElasticsearchWriter(String url, String username, String password, boolean sslVerify, int writeBulkSize, JsonMapper jsonMapper) {
         this.writeBulkSize = writeBulkSize;

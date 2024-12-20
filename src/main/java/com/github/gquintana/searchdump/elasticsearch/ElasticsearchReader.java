@@ -59,6 +59,9 @@ public class ElasticsearchReader implements SearchReader, QuietCloseable {
     }
 
     private Map<String, Object> toMap(JsonpSerializable jsonpSerializable) {
+        if (jsonpSerializable == null) {
+            return null;
+        }
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             JacksonJsonpGenerator jsonpGenerator = new JacksonJsonpGenerator(jsonMapper.createGenerator(outputStream));
             jsonpSerializable.serialize(

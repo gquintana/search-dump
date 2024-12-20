@@ -1,13 +1,13 @@
 package com.github.gquintana.searchdump.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.elasticsearch.indices.*;
+import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
+import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
 import co.elastic.clients.json.JsonpSerializable;
 import co.elastic.clients.json.jackson.JacksonJsonpGenerator;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.core.*;
-import org.example.core.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

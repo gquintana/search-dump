@@ -1,7 +1,6 @@
 package com.github.gquintana.searchdump;
 
 import com.github.gquintana.searchdump.core.*;
-import org.example.core.*;
 
 import java.util.*;
 

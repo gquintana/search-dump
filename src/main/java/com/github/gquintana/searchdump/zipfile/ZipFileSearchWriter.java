@@ -3,7 +3,6 @@ package com.github.gquintana.searchdump.zipfile;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.core.*;
-import org.example.core.*;
 
 import java.io.File;
 import java.io.FileOutputStream;

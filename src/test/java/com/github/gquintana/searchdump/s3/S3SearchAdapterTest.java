@@ -18,17 +18,21 @@ class S3SearchAdapterTest {
     @Test
     void testExportImport() throws Exception {
         var helper = new SearchPortHelper("test-1");
-        String endpointUrl = container.getEndpoint().toString();
         System.setProperty(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), container.getAccessKey());
         System.setProperty(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), container.getSecretKey());
-        try(S3Client s3Client = new S3ClientFactory(endpointUrl, container.getRegion()).create()) {
+        S3ClientFactory clientFactory = createClientFactory();
+        try(S3Client s3Client = clientFactory.create()) {
             s3Client.createBucket(CreateBucketRequest.builder().bucket("test-bucket").build());
         }
-        try(S3SearchWriter writer = new S3SearchWriter(endpointUrl, container.getRegion(), "test-bucket", "test-path", 10)) {
+        try(S3SearchWriter writer = new S3SearchWriter(clientFactory, "test-bucket", "test-path", 10)) {
             helper.createAndFill(writer);
         }
-        try(S3SearchReader reader = new S3SearchReader(endpointUrl, container.getRegion(), "test-bucket", "test-path")) {
+        try(S3SearchReader reader = new S3SearchReader(clientFactory, "test-bucket", "test-path")) {
             helper.readAndCheck(reader);
         }
+    }
+
+    private S3ClientFactory createClientFactory() {
+        return new S3ClientFactory(container.getEndpoint().toString(), container.getRegion());
     }
 }

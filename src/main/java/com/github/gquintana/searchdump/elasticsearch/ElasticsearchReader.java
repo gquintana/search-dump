@@ -22,12 +22,12 @@ public class ElasticsearchReader implements SearchReader, QuietCloseable {
     private final JsonMapper jsonMapper;
     private final JacksonJsonpMapper jsonpMapper;
 
-    public ElasticsearchReader(String url, String username, String password, boolean sslVerify,
+    public ElasticsearchReader(ElasticsearchClientFactory clientFactory,
                                int searchPageSize, String searchScrollTime, JsonMapper jsonMapper) {
         this.searchPageSize = searchPageSize;
         this.searchScrollTime = searchScrollTime;
         this.jsonMapper = jsonMapper;
-        this.client = new ElasticsearchClientFactory(url, username, password, sslVerify).create();
+        this.client = clientFactory.create();
         this.jsonpMapper = new JacksonJsonpMapper(jsonMapper);
     }
 

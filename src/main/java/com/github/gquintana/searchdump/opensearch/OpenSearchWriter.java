@@ -11,7 +11,10 @@ import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.json.jackson.JacksonJsonpParser;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.mapping.TypeMapping;
-import org.opensearch.client.opensearch.indices.*;
+import org.opensearch.client.opensearch.indices.Alias;
+import org.opensearch.client.opensearch.indices.CreateIndexRequest;
+import org.opensearch.client.opensearch.indices.IndexSettings;
+import org.opensearch.client.opensearch.indices.RefreshRequest;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -24,9 +27,9 @@ public class OpenSearchWriter implements SearchWriter {
     private final JsonpMapper jsonpMapper;
     private final int writeBulkSize;
 
-    public OpenSearchWriter(String url, String username, String password, boolean sslVerify,
+    public OpenSearchWriter(OpenSearchClientFactory clientFactory,
                             int writeBulkSize, JsonMapper jsonMapper) {
-        this.client = new OpenSearchClientFactory(url, username, password, sslVerify).create();
+        this.client = clientFactory.create();
         this.jsonMapper = jsonMapper;
         this.jsonpMapper= new JacksonJsonpMapper(jsonMapper);
         this.writeBulkSize = writeBulkSize;

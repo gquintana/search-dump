@@ -16,8 +16,8 @@ public class S3SearchWriter implements SearchWriter, QuietCloseable {
     private final String bucket;
     private final String key;
 
-    public S3SearchWriter(String endpointUrl, String region, String bucket, String key, int writeFileSize) {
-        this.s3Client = new S3ClientFactory(endpointUrl, region).create();
+    public S3SearchWriter(S3ClientFactory clientFactory, String bucket, String key, int writeFileSize) {
+        this.s3Client = clientFactory.create();
         this.bucket = bucket;
         this.key = key;
         this.writeFileSize = writeFileSize;

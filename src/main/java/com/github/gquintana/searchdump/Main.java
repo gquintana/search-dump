@@ -12,6 +12,7 @@ import com.github.gquintana.searchdump.s3.S3AdapterFactory;
 import com.github.gquintana.searchdump.zipfile.ZipFileAdapterFactory;
 
 import java.nio.file.Path;
+import java.util.List;
 
 public class Main {
     public static void main(String ... args) {
@@ -20,9 +21,13 @@ public class Main {
         try(SearchReader reader = createReader(configuration, jsonMapper);
             SearchWriter writer = createWriter(configuration, jsonMapper)) {
             SearchCopier copier = new SearchCopier(reader, writer);
-            String index = configuration.getString("index")
-                    .orElseThrow(() -> new IllegalArgumentException("Missing index"));
-            copier.copy(index);
+            List<String> indices = configuration.getStrings("index");
+            if (indices.isEmpty()) {
+                throw new MissingConfigurationException("index");
+            }
+            for(String index : indices) {
+                copier.copy(index);
+            }
         }
     }
 
@@ -58,6 +63,6 @@ public class Main {
     private static String getType(Configuration configuration, String prefix) {
         final String typeKey = prefix + ".type";
         return configuration.getString(typeKey)
-                .orElseThrow(() -> new IllegalArgumentException("Missing " + typeKey));
+                .orElseThrow(() -> new MissingConfigurationException("" + typeKey));
     }
 }

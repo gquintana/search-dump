@@ -16,12 +16,17 @@ class OpenSearchAdapterTest {
     @Test
     void testExportImport() {
         SearchPortHelper helper = new SearchPortHelper("test-1");
-        try(OpenSearchWriter writer = new OpenSearchWriter(container.getHttpHostAddress(), container.getUsername(), container.getPassword(), true, 10, jsonMapper)) {
+        try (OpenSearchWriter writer = new OpenSearchWriter(createClientFactory(), 10, jsonMapper)) {
             helper.createAndFill(writer);
             writer.refreshIndex("test-1");
         }
-        try(OpenSearchReader reader = new OpenSearchReader(container.getHttpHostAddress(), container.getUsername(), container.getPassword(), true, 10, "1m", jsonMapper)) {
+        try (OpenSearchReader reader = new OpenSearchReader(createClientFactory(), 10, "1m", jsonMapper)) {
             helper.readAndCheck(reader);
         }
+    }
+
+    private OpenSearchClientFactory createClientFactory() {
+        return new OpenSearchClientFactory(container.getHttpHostAddress(), container.getUsername(), container.getPassword(), true);
+
     }
 }

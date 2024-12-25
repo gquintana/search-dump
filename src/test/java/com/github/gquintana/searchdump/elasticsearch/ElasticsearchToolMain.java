@@ -22,7 +22,8 @@ public class ElasticsearchToolMain {
     }
 
     private static void init() {
-        try (ElasticsearchWriter writer = new ElasticsearchWriter("http://localhost:9200", "elastic", "elastic", true,
+        try (ElasticsearchWriter writer = new ElasticsearchWriter(
+                new ElasticsearchClientFactory("http://localhost:9200", "elastic", "elastic", true),
                 10, JsonMapper.builder().build())) {
             SearchPortHelper helper = new SearchPortHelper("test-1");
             helper.createAndFill(writer);

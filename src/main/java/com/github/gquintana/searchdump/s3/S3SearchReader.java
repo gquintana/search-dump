@@ -17,11 +17,11 @@ public class S3SearchReader implements SearchReader, QuietCloseable {
     private final String key;
 
 
-    public S3SearchReader(String endpointUrl, String region, String bucket, String key) {
+    public S3SearchReader(S3ClientFactory clientFactory, String bucket, String key) {
         this.bucket = bucket;
         this.key = key;
         jsonMapper = JsonMapper.builder().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false).build();
-        s3Client = new S3ClientFactory(endpointUrl, region).create();
+        s3Client = clientFactory.create();
 
     }
 

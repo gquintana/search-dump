@@ -10,7 +10,8 @@ import org.opensearch.client.json.JsonpSerializable;
 import org.opensearch.client.json.jackson.JacksonJsonpGenerator;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
-import org.opensearch.client.opensearch.indices.*;
+import org.opensearch.client.opensearch.indices.GetIndexRequest;
+import org.opensearch.client.opensearch.indices.GetIndexResponse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -25,9 +26,9 @@ public class OpenSearchReader implements SearchReader {
     private final int searchSize;
     private final String searchScrollTime;
 
-    public OpenSearchReader(String url, String username, String password, boolean sslVerify,
+    public OpenSearchReader(OpenSearchClientFactory clientFactory,
                             int searchSize, String searchScrollTime, JsonMapper jsonMapper) {
-        this.client = new OpenSearchClientFactory(url, username, password, sslVerify).create();
+        this.client = clientFactory.create();
         this.jsonMapper = jsonMapper;
         this.jsonpMapper = new JacksonJsonpMapper(jsonMapper);
         this.searchSize = searchSize;

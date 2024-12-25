@@ -22,7 +22,8 @@ public class OpenSearchToolMain {
     }
 
     private static void init() {
-        try (OpenSearchWriter writer = new OpenSearchWriter("https://localhost:9201", "admin", "admin", false,
+        try (OpenSearchWriter writer = new OpenSearchWriter(
+                new OpenSearchClientFactory("https://localhost:9201", "admin", "admin", false),
                 10, JsonMapper.builder().build())) {
             SearchPortHelper helper = new SearchPortHelper("test-1");
             helper.createAndFill(writer);

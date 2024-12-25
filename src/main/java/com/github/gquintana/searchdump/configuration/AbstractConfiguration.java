@@ -1,5 +1,7 @@
 package com.github.gquintana.searchdump.configuration;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -27,5 +29,11 @@ public abstract class AbstractConfiguration implements Configuration {
     @Override
     public Optional<Boolean> getBoolean(String key) {
         return getString(key).map(Boolean::parseBoolean);
+    }
+
+    public List<String> getStrings(String key) {
+        return getString(key)
+                .map(s -> List.of(s.split(",")))
+                .orElse(Collections.emptyList());
     }
 }

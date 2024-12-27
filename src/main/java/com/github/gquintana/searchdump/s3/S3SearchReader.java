@@ -5,10 +5,14 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.core.*;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class S3SearchReader implements SearchReader, QuietCloseable {
     private final JsonMapper jsonMapper;
@@ -23,6 +27,31 @@ public class S3SearchReader implements SearchReader, QuietCloseable {
         jsonMapper = JsonMapper.builder().configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false).build();
         s3Client = clientFactory.create();
 
+    }
+
+    @Override
+    public List<String> listIndices(List<String> indices) {
+        final String prefix = key + "/";
+        ListObjectsV2Response listObjectsResponse = s3Client.listObjectsV2(ListObjectsV2Request.builder()
+                .bucket(bucket).prefix(prefix).build());
+        MultiGlobMatcher multiGlobMatcher = new MultiGlobMatcher(indices);
+        return listObjectsResponse.contents().stream()
+                .flatMap(o -> {
+                    String n = o.key().substring(prefix.length());
+                    int slashIndex = n.lastIndexOf('/');
+                    if (slashIndex == 0) {
+                        throw new IllegalStateException("Invalid key: " + n);
+                    } else if (slashIndex > 0) {
+                        n = n.substring(0, slashIndex);
+                    }
+                    return multiGlobMatcher.matches(n) ? Stream.of(n) : Stream.empty();
+                })
+                .distinct()
+                .toList();
+    }
+
+    private static boolean containsObject(List<String> indices, String index) {
+        return true;
     }
 
     @Override

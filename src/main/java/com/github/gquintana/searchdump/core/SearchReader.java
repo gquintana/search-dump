@@ -1,7 +1,9 @@
 package com.github.gquintana.searchdump.core;
 
-public interface SearchReader extends QuietCloseable {
-    SearchIndex getIndex(String name);
+import java.util.List;
 
+public interface SearchReader extends QuietCloseable {
+    List<String> listIndices(List<String> indices);
+    SearchIndex getIndex(String name);
     SearchDocumentReader readDocuments(String index);
 }

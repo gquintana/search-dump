@@ -10,12 +10,15 @@ import org.opensearch.client.json.JsonpSerializable;
 import org.opensearch.client.json.jackson.JacksonJsonpGenerator;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.cat.IndicesRequest;
+import org.opensearch.client.opensearch.cat.IndicesResponse;
 import org.opensearch.client.opensearch.indices.GetIndexRequest;
 import org.opensearch.client.opensearch.indices.GetIndexResponse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -33,6 +36,15 @@ public class OpenSearchReader implements SearchReader {
         this.jsonpMapper = new JacksonJsonpMapper(jsonMapper);
         this.searchSize = searchSize;
         this.searchScrollTime = searchScrollTime;
+    }
+
+    public List<String> listIndices(List<String> names) {
+        try {
+            IndicesResponse indicesResponse = client.cat().indices(new IndicesRequest.Builder().index(names).build());
+            return indicesResponse.valueBody().stream().map(r -> r.index()).toList();
+        } catch (IOException e) {
+            throw new TechnicalException(e);
+        }
     }
 
     @Override

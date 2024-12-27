@@ -7,7 +7,9 @@ import com.github.gquintana.searchdump.core.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -27,6 +29,20 @@ public class ZipFileSearchReader implements SearchReader, QuietCloseable {
             throw new TechnicalException(e);
         }
     }
+
+    public List<String> listIndices(List<String> indexGlobs) {
+        MultiGlobMatcher indexGlobMatcher = new MultiGlobMatcher(indexGlobs);
+        return zipInputFile.stream()
+                .flatMap(e -> {
+                    var split = e.getName().split("[\\\\/]", 2);
+                    var index = split[0];
+                    return indexGlobMatcher.matches(index) ? Stream.of(index) : Stream.empty();
+                })
+                .distinct()
+                .toList();
+
+    }
+
 
     @Override
     public SearchIndex getIndex(String name) {
@@ -56,3 +72,4 @@ public class ZipFileSearchReader implements SearchReader, QuietCloseable {
         }
     }
 }
+

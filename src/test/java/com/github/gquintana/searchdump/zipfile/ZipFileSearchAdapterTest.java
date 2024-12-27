@@ -1,25 +1,27 @@
 package com.github.gquintana.searchdump.zipfile;
 
-import com.github.gquintana.searchdump.SearchPortHelper;
-import org.junit.jupiter.api.Test;
+import com.github.gquintana.searchdump.AbstractAdapterTest;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Path;
 
-class ZipFileSearchAdapterTest {
+class ZipFileSearchAdapterTest extends AbstractAdapterTest<ZipFileSearchWriter, ZipFileSearchReader> {
     @TempDir
     Path tempDir;
 
-    @Test
-    void testExportImport() throws Exception {
-        File zipFile = tempDir.resolve("test.zip").toFile();
-        var helper = new SearchPortHelper("test-1");
-        try(ZipFileSearchWriter writer = ZipFileSearchWriter.write(zipFile, 10)) {
-            helper.createAndFill(writer);
-        }
-        try(ZipFileSearchReader reader = ZipFileSearchReader.read(zipFile)) {
-            helper.readAndCheck(reader);
-        }
+    @Override
+    protected ZipFileSearchReader createReader() {
+        return ZipFileSearchReader.read(createZipFile());
+    }
+
+    @Override
+    protected ZipFileSearchWriter createWriter() {
+        return ZipFileSearchWriter.write(createZipFile(), 10);
+    }
+
+    private @NotNull File createZipFile() {
+        return tempDir.resolve("test.zip").toFile();
     }
 }

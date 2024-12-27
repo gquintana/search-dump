@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SearchPortHelper {
@@ -17,7 +18,7 @@ public class SearchPortHelper {
         this.index = index;
     }
 
-    public void createAndFill(SearchWriter port) {
+    public void create(SearchWriter port) {
         port.createIndex(new SearchIndex(index,
                 Map.of("index", Map.of(
                         "number_of_shards", 2,
@@ -29,6 +30,10 @@ public class SearchPortHelper {
                 )),
                 Map.of("test", Map.of())
         ));
+    }
+
+    public void createAndFill(SearchWriter port) {
+        create(port);
         try (SearchDocumentWriter writer = port.writeDocuments(index)) {
             for (int i = 0; i < 15; i++) {
                 String id = String.format("id-%02d", i);
@@ -40,6 +45,8 @@ public class SearchPortHelper {
     }
 
     public void readAndCheck(SearchReader port) {
+        List<String> foundIndices = port.listIndices(List.of(index));
+        assertTrue(foundIndices.contains(index));
         SearchIndex index = port.getIndex(this.index);
         assertEquals(this.index, index.name());
         assertEquals(2, ((Map<String, Object>) index.settings().get("index")).keySet().stream().filter(k -> k.contains("number")).count());
@@ -62,5 +69,17 @@ public class SearchPortHelper {
 
     public void copy(SearchReader reader, SearchWriter writer) {
         new SearchCopier(reader, writer).copy(this.index);
+    }
+
+    public void createList(SearchWriter port) {
+        for (int i = 0; i < 3; i++) {
+            SearchPortHelper helperi = new SearchPortHelper(index + "-" + i);
+            helperi.create(port);
+        }
+    }
+
+    public void listAndCheck(SearchReader port) {
+        List<String> indices = port.listIndices(List.of(index + "-*"));
+        assertEquals(3, indices.size());
     }
 }

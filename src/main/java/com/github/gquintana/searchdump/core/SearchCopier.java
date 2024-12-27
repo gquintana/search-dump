@@ -14,6 +14,7 @@ public class SearchCopier {
     }
 
     public void copy(String index) {
+        LOGGER.info("Preparing index {}", index);
         writer.createIndex(reader.getIndex(index));
         long documentCount = 0;
         try(SearchDocumentReader documentReader = reader.readDocuments(index);

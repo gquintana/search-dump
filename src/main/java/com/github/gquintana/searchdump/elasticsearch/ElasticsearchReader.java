@@ -1,6 +1,8 @@
 package com.github.gquintana.searchdump.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.cat.IndicesRequest;
+import co.elastic.clients.elasticsearch.cat.IndicesResponse;
 import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
 import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
 import co.elastic.clients.json.JsonpSerializable;
@@ -12,6 +14,7 @@ import com.github.gquintana.searchdump.core.*;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -29,6 +32,15 @@ public class ElasticsearchReader implements SearchReader, QuietCloseable {
         this.jsonMapper = jsonMapper;
         this.client = clientFactory.create();
         this.jsonpMapper = new JacksonJsonpMapper(jsonMapper);
+    }
+
+    public List<String> listIndices(List<String> names) {
+        try {
+            IndicesResponse indicesResponse = client.cat().indices(new IndicesRequest.Builder().index(names).build());
+            return indicesResponse.valueBody().stream().map(r -> r.index()).toList();
+        } catch (IOException e) {
+            throw new TechnicalException(e);
+        }
     }
 
     @Override

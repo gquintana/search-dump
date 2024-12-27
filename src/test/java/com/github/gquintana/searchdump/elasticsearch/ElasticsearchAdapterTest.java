@@ -3,6 +3,7 @@ package com.github.gquintana.searchdump.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.github.gquintana.searchdump.AbstractAdapterTest;
 import com.github.gquintana.searchdump.SearchPortHelper;
 import com.github.gquintana.searchdump.zipfile.ZipFileSearchReader;
 import com.github.gquintana.searchdump.zipfile.ZipFileSearchWriter;
@@ -18,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 @Testcontainers
-class ElasticsearchAdapterTest {
+class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, ElasticsearchReader> {
     private static final String ELASTICSEARCH_USERNAME = "elastic";
     private static final String ELASTICSEARCH_PASSWORD = "Test.Adapter:1";
     @Container
@@ -30,28 +31,21 @@ class ElasticsearchAdapterTest {
     static ElasticsearchClientFactory createClientFactory() {
         return new ElasticsearchClientFactory("http://" + container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD,true);
     }
-    @Test
-    void testExportImport() {
-        try (ElasticsearchWriter writer = createWriter();
-             ElasticsearchReader reader = createReader()
-        ) {
-            SearchPortHelper helper = new SearchPortHelper("test-1");
-            helper.createAndFill(writer);
-            writer.refreshIndex("test-1");
-            helper.readAndCheck(reader);
-        }
-    }
-
-    private @NotNull ElasticsearchReader createReader() {
+    protected @NotNull ElasticsearchReader createReader() {
         return new ElasticsearchReader(createClientFactory(), 10, "1m", jsonMapper);
     }
 
-    private @NotNull ElasticsearchWriter createWriter() {
+    protected @NotNull ElasticsearchWriter createWriter() {
         return new ElasticsearchWriter(createClientFactory(), 10, jsonMapper);
     }
 
+    @Override
+    protected void refreshIndex(ElasticsearchWriter writer, String index) {
+        writer.refreshIndex(index);
+    }
+
     @Test
-    void testCopyToZipFile() {
+    void copyToZipFile() {
         File zipFile = tempDir.resolve("test-2.zip").toFile();
         SearchPortHelper helper = new SearchPortHelper("test-2");
         try (ElasticsearchWriter writer = createWriter()) {
@@ -68,7 +62,7 @@ class ElasticsearchAdapterTest {
     }
 
     @Test
-    void testCopyFromZipFile() {
+    void copyFromZipFile() {
         File zipFile = tempDir.resolve("test-3.zip").toFile();
         SearchPortHelper helper = new SearchPortHelper("test-3");
         try (ZipFileSearchWriter zipWriter = ZipFileSearchWriter.write(zipFile, 10)) {
@@ -83,8 +77,9 @@ class ElasticsearchAdapterTest {
             helper.readAndCheck(reader);
         }
     }
+
     @Test
-    void testBackupRestore() throws IOException {
+    void copyToAndFromZipFile() throws IOException {
         File zipFile = tempDir.resolve("test-4.zip").toFile();
         SearchPortHelper helper = new SearchPortHelper("test-4");
         try (ElasticsearchWriter writer = createWriter()) {
@@ -107,5 +102,4 @@ class ElasticsearchAdapterTest {
             writer.refreshIndex("test-4");
         }
     }
-
 }

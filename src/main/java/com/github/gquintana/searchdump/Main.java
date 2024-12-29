@@ -25,9 +25,7 @@ public class Main {
             if (indices.isEmpty()) {
                 throw new MissingConfigurationException("index");
             }
-            for(String index : indices) {
-                copier.copy(index);
-            }
+            copier.copy(indices);
         }
     }
 
@@ -63,6 +61,6 @@ public class Main {
     private static String getType(Configuration configuration, String prefix) {
         final String typeKey = prefix + ".type";
         return configuration.getString(typeKey)
-                .orElseThrow(() -> new MissingConfigurationException("" + typeKey));
+                .orElseThrow(() -> new MissingConfigurationException(typeKey));
     }
 }

@@ -2,6 +2,8 @@ name: search-dump
 services:
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.26
+    hostname: elasticsearch
+    container_name: elasticsearch
     ports:
       - "9200:9200"
     environment:
@@ -10,8 +12,15 @@ services:
       "ELASTIC_PASSWORD": "elastic"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: "curl --user 'elastic:elastic' --silent --fail --output /dev/null --write-out '%{http_code}' http://localhost:9200"
+      interval: 30s
+      timeout: 30s
+      retries: 3
   opensearch:
     image: opensearchproject/opensearch:1
+    hostname: opensearch
+    container_name: opensearch
     ports:
       - 9201:9200
     environment:
@@ -19,7 +28,20 @@ services:
       "OPENSEARCH_PASSWORD": "admin"
     volumes:
       - opensearch-data:/usr/share/opensearch/data
-
+  searchdump:
+    build: .
+    environment:
+      READER_TYPE: zip
+      READER_FILE: /data/test.zip
+      WRITER_TYPE: elasticsearch
+      WRITER_URL: http://elasticsearch:9200
+      WRITER_USERNAME: elastic
+      WRITER_PASSWORD: elastic
+      INDEX: 'test-*'
+    volumes:
+      - "./test.zip:/data/test.zip"
+    depends_on:
+      - elasticsearch
 volumes:
   elasticsearch-data:
   opensearch-data:

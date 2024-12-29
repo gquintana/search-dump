@@ -1,3 +1,4 @@
 #!/usr/bin/env sh
-cd lib
-java -jar search-dump-${VERSION}.jar $*
+echo "Search Dump ${VERSION}"
+basedir="$(dirname $0)/.."
+java -jar "${basedir}/lib/search-dump-${VERSION}.jar" $*

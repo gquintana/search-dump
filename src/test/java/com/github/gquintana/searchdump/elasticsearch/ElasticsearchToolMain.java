@@ -25,9 +25,12 @@ public class ElasticsearchToolMain {
         try (ElasticsearchWriter writer = new ElasticsearchWriter(
                 new ElasticsearchClientFactory("http://localhost:9200", "elastic", "elastic", true),
                 10, JsonMapper.builder().build())) {
-            SearchPortHelper helper = new SearchPortHelper("test-1");
-            helper.createAndFill(writer);
-            writer.refreshIndex("test-1");
+            for (int i = 1; i < 3; i++) {
+                SearchPortHelper helper = new SearchPortHelper("test-" + i);
+                helper.createAndFill(writer);
+                writer.refreshIndex("test-" + i);
+
+            }
         }
     }
 
@@ -39,7 +42,7 @@ public class ElasticsearchToolMain {
                 "--writer-type", "zip",
                 "--writer-file", "test.zip",
                 "--writer-file-size", "10",
-                "--index", "test-1"
+                "--index", "test-*"
         );
     }
 
@@ -52,7 +55,7 @@ public class ElasticsearchToolMain {
                 "--writer-username", "elastic",
                 "--writer-password", "elastic",
                 "--writer-ssl-verify", "false",
-                "--index", "test-1"
+                "--index", "test-*"
         );
     }
 }

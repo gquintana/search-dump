@@ -24,6 +24,17 @@ public abstract class AbstractAdapterTest<W extends SearchWriter, R extends Sear
     }
 
     @Test
+    void writeWhenNoDocuments() {
+        SearchPortHelper helper = new SearchPortHelper("test-no-docs");
+        try (W writer = createWriter()) {
+            helper.createAndFill(writer, 0);
+            refreshIndex(writer, "test-no-docs");
+        }
+        try (R reader = createReader()) {
+            helper.readAndCheck(reader, 0);
+        }
+    }
+    @Test
     void listIndexes() {
         SearchPortHelper helper = new SearchPortHelper("list");
         try (W writer = createWriter()) {

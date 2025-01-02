@@ -53,14 +53,29 @@ public class SearchCopier {
         return created;
     }
 
+    private record WriteReport(long timestamp, long documentCount) {
+        private WriteReport logIfNeeded(String index, long currentCount) {
+            long currentTimestamp = System.currentTimeMillis();
+            long deltaTimestamp = currentTimestamp - this.timestamp();
+            if (deltaTimestamp > 60000L) {
+                long docRate = (currentCount - documentCount)*1000/deltaTimestamp;
+                LOGGER.info("Wrote {} documents to index {}, {} docs/s", currentCount, index, docRate);
+                return new WriteReport(currentTimestamp, currentCount);
+            } else {
+                return this;
+            }
+        }
+    }
     private void copyDocuments(String index) {
         long documentCount = 0;
+        WriteReport report = new WriteReport(System.currentTimeMillis(), 0);
         try(SearchDocumentReader documentReader = reader.readDocuments(index);
             SearchDocumentWriter documentWriter = writer.writeDocuments(index)
         ) {
             while (documentReader.hasNext()) {
                 documentWriter.write(documentReader.next());
                 documentCount++;
+                report = report.logIfNeeded(index, documentCount);
             }
             documentWriter.flush();
             LOGGER.info("Wrote {} documents to index {}", documentCount, index);

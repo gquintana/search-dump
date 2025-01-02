@@ -60,10 +60,12 @@ public class S3SearchDocumentWriter implements SearchDocumentWriter {
 
     @Override
     public void flush() {
-        try {
-            endS3Object();
-        } catch (IOException e) {
-            throw new TechnicalException(e);
+        if (tempOutputStream != null) {
+            try {
+                endS3Object();
+            } catch (IOException e) {
+                throw new TechnicalException(e);
+            }
         }
     }
 
@@ -81,12 +83,6 @@ public class S3SearchDocumentWriter implements SearchDocumentWriter {
 
     @Override
     public void close() {
-        if (tempOutputStream != null) {
-            try {
-                endS3Object();
-            } catch (IOException e) {
-                throw new TechnicalException(e);
-            }
-        }
+        flush();
     }
 }

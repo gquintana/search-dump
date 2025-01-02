@@ -1,7 +1,12 @@
 package com.github.gquintana.searchdump;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.github.gquintana.searchdump.configuration.*;
+import com.github.gquintana.searchdump.configuration.ArgsConfiguration;
+import com.github.gquintana.searchdump.configuration.CompositeConfiguration;
+import com.github.gquintana.searchdump.configuration.Configuration;
+import com.github.gquintana.searchdump.configuration.EnvironmentConfiguration;
+import com.github.gquintana.searchdump.configuration.MissingConfigurationException;
+import com.github.gquintana.searchdump.configuration.PropertiesConfiguration;
 import com.github.gquintana.searchdump.core.SearchAdapterFactory;
 import com.github.gquintana.searchdump.core.SearchCopier;
 import com.github.gquintana.searchdump.core.SearchReader;
@@ -12,14 +17,17 @@ import com.github.gquintana.searchdump.s3.S3AdapterFactory;
 import com.github.gquintana.searchdump.zipfile.ZipFileAdapterFactory;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class Main {
-    public static void main(String ... args) {
+    public static void main(String... args) {
         Configuration configuration = createConfiguration(args);
         JsonMapper jsonMapper = JsonMapper.builder().build();
-        try(SearchReader reader = createReader(configuration, jsonMapper);
-            SearchWriter writer = createWriter(configuration, jsonMapper)) {
+        try (SearchReader reader = createReader(configuration, jsonMapper);
+             SearchWriter writer = createWriter(configuration, jsonMapper)) {
             SearchCopier copier = new SearchCopier(reader, writer,
                     configuration.getBoolean("index.skip-failed").orElse(Boolean.TRUE),
                     configuration.getBoolean("index.skip-existing").orElse(Boolean.TRUE));
@@ -32,12 +40,18 @@ public class Main {
     }
 
     private static Configuration createConfiguration(String[] args) {
-        Configuration configuration = switch (args.length) {
-            case 0 -> new EnvironmentConfiguration();
-            case 1 -> PropertiesConfiguration.load(Path.of(args[0]));
-            default -> new ArgsConfiguration(args);
-        };
-        return new CompositeConfiguration(configuration, new EnvironmentConfiguration());
+        List<Configuration> configurations = new ArrayList<>();
+        configurations.add(new EnvironmentConfiguration());
+        if (args.length == 1) {
+            configurations.add(PropertiesConfiguration.load(Path.of(args[0])));
+        } else if (args.length > 1) {
+            ArgsConfiguration argsConfiguration = new ArgsConfiguration(args);
+            argsConfiguration.getString("config")
+                .ifPresent(s -> configurations.add(PropertiesConfiguration.load(Path.of(s))));
+            configurations.add(argsConfiguration);
+        }
+        Collections.reverse(configurations);
+        return new CompositeConfiguration(configurations);
     }
 
     private static SearchWriter createWriter(Configuration configuration, JsonMapper jsonMapper) {

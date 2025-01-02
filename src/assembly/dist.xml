@@ -18,6 +18,7 @@
         <fileSet>
             <directory>${project.basedir}/src/assembly/bin</directory>
             <outputDirectory>bin</outputDirectory>
+            <fileMode>0755</fileMode>
         </fileSet>
     </fileSets>
     <dependencySets>

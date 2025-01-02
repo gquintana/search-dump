@@ -7,6 +7,8 @@ import com.github.gquintana.searchdump.core.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -14,6 +16,7 @@ public class ZipFileSearchWriter implements SearchWriter, QuietCloseable {
     private final JsonMapper jsonMapper;
     private final ZipOutputStream zipOutputStream;
     private final int writeFileSize;
+    private final Set<String> indices =  new HashSet<>();
 
     private ZipFileSearchWriter(ZipOutputStream zipOutputStream, int writeFileSize) {
         this.zipOutputStream = zipOutputStream;
@@ -30,14 +33,23 @@ public class ZipFileSearchWriter implements SearchWriter, QuietCloseable {
     }
 
     @Override
-    public void createIndex(SearchIndex index) {
+    public boolean createIndex(SearchIndex index) {
+        if (existIndex(index)) {
+            return false;
+        }
         try {
             zipOutputStream.putNextEntry(new ZipEntry(index.name() + "/index.json"));
             jsonMapper.writeValue(zipOutputStream, index);
             zipOutputStream.closeEntry();
+            this.indices.add(index.name());
+            return true;
         } catch (IOException e) {
             throw new TechnicalException(e);
         }
+    }
+
+    private boolean existIndex(SearchIndex index) {
+        return this.indices.contains(index.name());
     }
 
     @Override

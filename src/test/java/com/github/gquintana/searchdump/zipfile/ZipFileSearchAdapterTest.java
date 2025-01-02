@@ -1,6 +1,6 @@
 package com.github.gquintana.searchdump.zipfile;
 
-import com.github.gquintana.searchdump.AbstractAdapterTest;
+import com.github.gquintana.searchdump.core.AbstractAdapterTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.io.TempDir;
 

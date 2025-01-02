@@ -3,8 +3,8 @@ package com.github.gquintana.searchdump.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.github.gquintana.searchdump.AbstractAdapterTest;
 import com.github.gquintana.searchdump.SearchPortHelper;
+import com.github.gquintana.searchdump.core.AbstractAdapterTest;
 import com.github.gquintana.searchdump.zipfile.ZipFileSearchReader;
 import com.github.gquintana.searchdump.zipfile.ZipFileSearchWriter;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +28,11 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
     @TempDir
     Path tempDir;
     private final JsonMapper jsonMapper = JsonMapper.builder().build();
+
     static ElasticsearchClientFactory createClientFactory() {
-        return new ElasticsearchClientFactory("http://" + container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD,true);
+        return new ElasticsearchClientFactory("http://" + container.getHttpHostAddress(), ELASTICSEARCH_USERNAME, ELASTICSEARCH_PASSWORD, true);
     }
+
     protected @NotNull ElasticsearchReader createReader() {
         return new ElasticsearchReader(createClientFactory(), 10, "1m", jsonMapper);
     }
@@ -46,11 +48,11 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
 
     @Test
     void copyToZipFile() {
-        File zipFile = tempDir.resolve("test-2.zip").toFile();
-        SearchPortHelper helper = new SearchPortHelper("test-2");
+        File zipFile = tempDir.resolve("test-12.zip").toFile();
+        SearchPortHelper helper = new SearchPortHelper("test-12");
         try (ElasticsearchWriter writer = createWriter()) {
             helper.createAndFill(writer);
-            writer.refreshIndex("test-2");
+            writer.refreshIndex("test-12");
         }
         try (ElasticsearchReader reader = createReader();
              ZipFileSearchWriter zipWriter = ZipFileSearchWriter.write(zipFile, 10)) {
@@ -63,15 +65,15 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
 
     @Test
     void copyFromZipFile() {
-        File zipFile = tempDir.resolve("test-3.zip").toFile();
-        SearchPortHelper helper = new SearchPortHelper("test-3");
+        File zipFile = tempDir.resolve("test-13.zip").toFile();
+        SearchPortHelper helper = new SearchPortHelper("test-13");
         try (ZipFileSearchWriter zipWriter = ZipFileSearchWriter.write(zipFile, 10)) {
             helper.createAndFill(zipWriter);
         }
         try (ZipFileSearchReader zipReader = ZipFileSearchReader.read(zipFile);
              ElasticsearchWriter writer = createWriter()) {
             helper.copy(zipReader, writer);
-            writer.refreshIndex("test-3");
+            writer.refreshIndex("test-13");
         }
         try (ElasticsearchReader reader = createReader()) {
             helper.readAndCheck(reader);
@@ -79,12 +81,12 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
     }
 
     @Test
-    void copyToAndFromZipFile() throws IOException {
-        File zipFile = tempDir.resolve("test-4.zip").toFile();
-        SearchPortHelper helper = new SearchPortHelper("test-4");
+    void copyToAndFromZipFile() {
+        File zipFile = tempDir.resolve("test-14.zip").toFile();
+        SearchPortHelper helper = new SearchPortHelper("test-14");
         try (ElasticsearchWriter writer = createWriter()) {
             helper.createAndFill(writer);
-            writer.refreshIndex("test-4");
+            writer.refreshIndex("test-14");
         }
         // Backup
         try (ElasticsearchReader reader = createReader();
@@ -92,14 +94,21 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
             helper.copy(reader, zipWriter);
         }
         // Delete
-        try(ElasticsearchClient client = createClientFactory().create()) {
-            client.indices().delete(new DeleteIndexRequest.Builder().index("test-4").build());
-        }
+        deleteIndex("test-14");
         // Restore
         try (ZipFileSearchReader zipReader = ZipFileSearchReader.read(zipFile);
              ElasticsearchWriter writer = createWriter()) {
             helper.copy(zipReader, writer);
-            writer.refreshIndex("test-4");
+            writer.refreshIndex("test-14");
+        }
+    }
+
+    @Override
+    protected void deleteIndex(String index) {
+        try (ElasticsearchClient client = createClientFactory().create()) {
+            client.indices().delete(new DeleteIndexRequest.Builder().index(index).build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

@@ -20,10 +20,12 @@ public class Main {
         JsonMapper jsonMapper = JsonMapper.builder().build();
         try(SearchReader reader = createReader(configuration, jsonMapper);
             SearchWriter writer = createWriter(configuration, jsonMapper)) {
-            SearchCopier copier = new SearchCopier(reader, writer);
-            List<String> indices = configuration.getStrings("index");
+            SearchCopier copier = new SearchCopier(reader, writer,
+                    configuration.getBoolean("index.skip-failed").orElse(Boolean.TRUE),
+                    configuration.getBoolean("index.skip-existing").orElse(Boolean.TRUE));
+            List<String> indices = configuration.getStrings("index.names");
             if (indices.isEmpty()) {
-                throw new MissingConfigurationException("index");
+                throw new MissingConfigurationException("index.names");
             }
             copier.copy(indices);
         }

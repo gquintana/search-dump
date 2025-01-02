@@ -68,7 +68,7 @@ public class SearchPortHelper {
     }
 
     public void copy(SearchReader reader, SearchWriter writer) {
-        new SearchCopier(reader, writer).copy(this.index);
+        new SearchCopier(reader, writer, false, false).copy(this.index);
     }
 
     public void createList(SearchWriter port) {

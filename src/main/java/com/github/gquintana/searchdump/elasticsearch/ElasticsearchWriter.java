@@ -2,10 +2,7 @@ package com.github.gquintana.searchdump.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.mapping.TypeMapping;
-import co.elastic.clients.elasticsearch.indices.Alias;
-import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
-import co.elastic.clients.elasticsearch.indices.IndexSettings;
-import co.elastic.clients.elasticsearch.indices.RefreshRequest;
+import co.elastic.clients.elasticsearch.indices.*;
 import co.elastic.clients.json.JsonpDeserializer;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.json.jackson.JacksonJsonpParser;
@@ -31,8 +28,11 @@ public class ElasticsearchWriter implements SearchWriter, QuietCloseable {
     }
 
     @Override
-    public void createIndex(SearchIndex index) {
+    public boolean createIndex(SearchIndex index) {
         try {
+            if (existIndex(index.name())) {
+                return false;
+            }
             CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder()
                     .index(index.name())
                     .settings(fromMap(index.settings(), IndexSettings._DESERIALIZER))
@@ -42,9 +42,15 @@ public class ElasticsearchWriter implements SearchWriter, QuietCloseable {
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
                     .build();
             client.indices().create(createIndexRequest);
+            return true;
         } catch (IOException e) {
             throw new TechnicalException(e);
         }
+    }
+
+    private boolean existIndex(String name) throws IOException {
+        ExistsRequest existsRequest = new ExistsRequest.Builder().index(name).build();
+        return client.indices().exists(existsRequest).value();
     }
 
     public <T> T fromMap(Map<String, Object> map, JsonpDeserializer<T> deserializer) {

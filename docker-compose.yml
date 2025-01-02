@@ -37,7 +37,7 @@ services:
       WRITER_URL: http://elasticsearch:9200
       WRITER_USERNAME: elastic
       WRITER_PASSWORD: elastic
-      INDEX: 'test-*'
+      INDEX_NAMES: 'test-*'
     volumes:
       - "./test.zip:/data/test.zip"
     depends_on:

@@ -11,10 +11,7 @@ import org.opensearch.client.json.jackson.JacksonJsonpMapper;
 import org.opensearch.client.json.jackson.JacksonJsonpParser;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.mapping.TypeMapping;
-import org.opensearch.client.opensearch.indices.Alias;
-import org.opensearch.client.opensearch.indices.CreateIndexRequest;
-import org.opensearch.client.opensearch.indices.IndexSettings;
-import org.opensearch.client.opensearch.indices.RefreshRequest;
+import org.opensearch.client.opensearch.indices.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,8 +34,11 @@ public class OpenSearchWriter implements SearchWriter {
 
 
     @Override
-    public void createIndex(SearchIndex index) {
+    public boolean createIndex(SearchIndex index) {
         try {
+            if (existIndex(index.name())) {
+                return false;
+            }
             CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder()
                     .index(index.name())
                     .settings(fromMap(index.settings(), IndexSettings._DESERIALIZER))
@@ -48,9 +48,15 @@ public class OpenSearchWriter implements SearchWriter {
                             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
                     .build();
             client.indices().create(createIndexRequest);
+            return true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean existIndex(String name) throws IOException{
+        ExistsRequest existsRequest = new ExistsRequest.Builder().index(name).build();
+        return client.indices().exists(existsRequest).value();
     }
 
     private <T> T fromMap(Map<String, Object> map, JsonpDeserializer<T> deserializer) {

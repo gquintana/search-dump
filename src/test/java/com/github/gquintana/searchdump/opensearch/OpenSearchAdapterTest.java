@@ -1,10 +1,14 @@
 package com.github.gquintana.searchdump.opensearch;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.github.gquintana.searchdump.AbstractAdapterTest;
+import com.github.gquintana.searchdump.core.AbstractAdapterTest;
+import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch.indices.DeleteIndexRequest;
 import org.opensearch.testcontainers.OpensearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import java.io.IOException;
 
 @Testcontainers
 class OpenSearchAdapterTest extends AbstractAdapterTest<OpenSearchWriter, OpenSearchReader> {
@@ -30,5 +34,15 @@ class OpenSearchAdapterTest extends AbstractAdapterTest<OpenSearchWriter, OpenSe
     private OpenSearchClientFactory createClientFactory() {
         return new OpenSearchClientFactory(container.getHttpHostAddress(), container.getUsername(), container.getPassword(), true);
 
+    }
+
+    @Override
+    protected void deleteIndex(String index) {
+        try {
+            OpenSearchClient client = createClientFactory().create();
+            client.indices().delete(new DeleteIndexRequest.Builder().index(index).build());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

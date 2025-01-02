@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.core.*;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
@@ -26,16 +29,33 @@ public class S3SearchWriter implements SearchWriter, QuietCloseable {
 
 
     @Override
-    public void createIndex(SearchIndex index) {
+    public boolean createIndex(SearchIndex index) {
+        String indexKey = key + "/" + index.name() + "/index.json";
         try {
+            if (existObject(indexKey)) {
+                return false;
+            }
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucket)
-                    .key(key + "/" + index.name() + "/index.json")
+                    .key(indexKey)
                     .build();
             RequestBody requestBody = RequestBody.fromBytes(jsonMapper.writeValueAsBytes(index));
             s3Client.putObject(putObjectRequest, requestBody);
+            return true;
         } catch (IOException e) {
             throw new TechnicalException(e);
+        }
+    }
+
+    private boolean existObject(String key) {
+        try {
+            HeadObjectResponse headObjectResponse = s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build());
+            return !headObjectResponse.deleteMarker();
+        } catch (NoSuchKeyException e) {
+            return false;
         }
     }
 

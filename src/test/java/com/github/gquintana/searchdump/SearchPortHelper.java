@@ -57,8 +57,12 @@ public class SearchPortHelper {
         assertTrue(foundIndices.contains(index));
         SearchIndex index = reader.getIndex(this.index);
         assertEquals(this.index, index.name());
-        assertEquals(2, ((Map<String, Object>) index.settings().get("index")).keySet().stream().filter(k -> k.contains("number")).count());
-        assertEquals(3, ((Map<String, Object>) index.mappings().get("properties")).size());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> indexSettings = (Map<String, Object>) index.settings().get("index");
+        assertEquals(2, indexSettings.keySet().stream().filter(k -> k.contains("number")).count());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> indexMappings = (Map<String, Object>) index.mappings().get("properties");
+        assertEquals(3, indexMappings.size());
         assertEquals(1, index.aliases().size());
         try (SearchDocumentReader docReader = reader.readDocuments(this.index)) {
             List<SearchDocument> docs = new ArrayList<>();

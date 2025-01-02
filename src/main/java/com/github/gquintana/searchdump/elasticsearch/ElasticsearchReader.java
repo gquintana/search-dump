@@ -3,11 +3,13 @@ package com.github.gquintana.searchdump.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.cat.IndicesRequest;
 import co.elastic.clients.elasticsearch.cat.IndicesResponse;
+import co.elastic.clients.elasticsearch.cat.indices.IndicesRecord;
 import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
 import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
 import co.elastic.clients.json.JsonpSerializable;
 import co.elastic.clients.json.jackson.JacksonJsonpGenerator;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.core.*;
 
@@ -19,6 +21,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ElasticsearchReader implements SearchReader, QuietCloseable {
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
     private final int searchPageSize;
     private final String searchScrollTime;
     private final ElasticsearchClient client;
@@ -37,7 +40,7 @@ public class ElasticsearchReader implements SearchReader, QuietCloseable {
     public List<String> listIndices(List<String> names) {
         try {
             IndicesResponse indicesResponse = client.cat().indices(new IndicesRequest.Builder().index(names).build());
-            return indicesResponse.valueBody().stream().map(r -> r.index()).toList();
+            return indicesResponse.valueBody().stream().map(IndicesRecord::index).toList();
         } catch (IOException e) {
             throw new TechnicalException(e);
         }
@@ -80,7 +83,7 @@ public class ElasticsearchReader implements SearchReader, QuietCloseable {
                     jsonpGenerator,
                     jsonpMapper);
             jsonpGenerator.flush();
-            return jsonMapper.readValue(outputStream.toByteArray(), Map.class);
+            return jsonMapper.readValue(outputStream.toByteArray(), MAP_TYPE_REF);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

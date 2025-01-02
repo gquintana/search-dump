@@ -2,9 +2,14 @@ package com.github.gquintana.searchdump.elasticsearch;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.Time;
-import co.elastic.clients.elasticsearch.core.*;
+import co.elastic.clients.elasticsearch.core.ClearScrollRequest;
+import co.elastic.clients.elasticsearch.core.ScrollRequest;
+import co.elastic.clients.elasticsearch.core.ScrollResponse;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.github.gquintana.searchdump.core.SearchDocument;
 import com.github.gquintana.searchdump.core.SearchDocumentReader;
 import com.github.gquintana.searchdump.core.TechnicalException;
@@ -14,11 +19,12 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class ElasticsearchDocumentReader implements SearchDocumentReader {
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
     private final ElasticsearchClient client;
     private final String scrollId;
     private final Time scrollTime;
     private int hitSize;
-    private Iterator<Hit<Map>> hitIterator;
+    private Iterator<Hit<Map<String, Object>>> hitIterator;
 
     public ElasticsearchDocumentReader(String index, int searchSize, String searchScrollTime, ElasticsearchClient client) {
         this.client = client;
@@ -29,7 +35,7 @@ public class ElasticsearchDocumentReader implements SearchDocumentReader {
                     .size(searchSize)
                     .scroll(scrollTime)
                     .build();
-            SearchResponse<Map> searchResponse = client.search(searchRequest, Map.class);
+            SearchResponse<Map<String, Object>> searchResponse = client.search(searchRequest, MAP_TYPE_REF.getType());
             this.scrollId = searchResponse.scrollId();
             setHits(searchResponse.hits());
         } catch (IOException e) {
@@ -37,7 +43,7 @@ public class ElasticsearchDocumentReader implements SearchDocumentReader {
         }
     }
 
-    private void setHits(HitsMetadata hits) {
+    private void setHits(HitsMetadata<Map<String, Object>> hits) {
         this.hitSize = hits.hits().size();
         this.hitIterator = hits.hits().iterator();
     }
@@ -62,7 +68,7 @@ public class ElasticsearchDocumentReader implements SearchDocumentReader {
         }
         try {
             ScrollRequest scrollRequest = new ScrollRequest.Builder().scrollId(scrollId).scroll(scrollTime).build();
-            ScrollResponse<Map> scrollResponse = client.scroll(scrollRequest, Map.class);
+            ScrollResponse<Map<String, Object>> scrollResponse = client.scroll(scrollRequest, MAP_TYPE_REF.getType());
             setHits(scrollResponse.hits());
         } catch (IOException e) {
             throw new TechnicalException(e);
@@ -72,7 +78,7 @@ public class ElasticsearchDocumentReader implements SearchDocumentReader {
 
     @Override
     public SearchDocument next() {
-        Hit<Map> hit = hitIterator.next();
+        Hit<Map<String, Object>> hit = hitIterator.next();
         return new SearchDocument(hit.index(), hit.id(), hit.source());
     }
 }

@@ -15,6 +15,7 @@ import org.opensearch.client.opensearch.indices.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -28,7 +29,7 @@ public class OpenSearchWriter implements SearchWriter {
                             int writeBulkSize, JsonMapper jsonMapper) {
         this.client = clientFactory.create();
         this.jsonMapper = jsonMapper;
-        this.jsonpMapper= new JacksonJsonpMapper(jsonMapper);
+        this.jsonpMapper = new JacksonJsonpMapper(jsonMapper);
         this.writeBulkSize = writeBulkSize;
     }
 
@@ -39,22 +40,47 @@ public class OpenSearchWriter implements SearchWriter {
             if (existIndex(index.name())) {
                 return false;
             }
-            CreateIndexRequest createIndexRequest = new CreateIndexRequest.Builder()
-                    .index(index.name())
-                    .settings(fromMap(index.settings(), IndexSettings._DESERIALIZER))
-                    .mappings(fromMap(index.mappings(), TypeMapping._DESERIALIZER))
-                    .aliases(index.aliases().entrySet().stream()
-                            .map(e -> Map.entry(e.getKey(), fromMap((Map<String, Object>) e.getValue(), Alias._DESERIALIZER)))
-                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                    .build();
-            client.indices().create(createIndexRequest);
+            CreateIndexRequest.Builder createIndexRequestBuilder = new CreateIndexRequest.Builder()
+                    .index(index.name());
+            if (index.settings() != null) {
+                createIndexRequestBuilder.settings(fromMap(cleanIndexSettings(index.settings()), IndexSettings._DESERIALIZER));
+            }
+            if (index.mappings() != null) {
+                createIndexRequestBuilder.mappings(fromMap(cleanIndexMappings(index.mappings()), TypeMapping._DESERIALIZER));
+            }
+            if (index.aliases() != null) {
+                createIndexRequestBuilder.aliases(index.aliases().entrySet().stream()
+                        .map(e -> Map.entry(e.getKey(), fromMap((Map<String, Object>) e.getValue(), Alias._DESERIALIZER)))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+            }
+            client.indices().create(createIndexRequestBuilder.build());
             return true;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private boolean existIndex(String name) throws IOException{
+    private Map<String, Object> cleanIndexSettings(Map<String, Object> settings) {
+        Map<String, Object> cleanedSettings = new HashMap<>(settings);
+        cleanedSettings.remove("lifecycle"); // ILM is not supported on Opensearch
+        if (cleanedSettings.containsKey("index")) {
+            cleanedSettings.put("index", cleanIndexSettings((Map<String, Object>) cleanedSettings.get("index")));
+        }
+        if (cleanedSettings.containsKey("settings")) {
+            cleanedSettings.put("settings", cleanIndexSettings((Map<String, Object>) cleanedSettings.get("settings")));
+        }
+        return cleanedSettings;
+    }
+
+    private Map<String, Object> cleanIndexMappings(Map<String, Object> mappings) {
+        Map<String, Object> cleanedMappings = new HashMap<>(mappings);
+        if (cleanedMappings.containsKey("dynamic")) {
+            cleanedMappings.put("dynamic", String.valueOf(cleanedMappings.get("dynamic")));
+        }
+        return cleanedMappings;
+    }
+
+    private boolean existIndex(String name) throws IOException {
         ExistsRequest existsRequest = new ExistsRequest.Builder().index(name).build();
         return client.indices().exists(existsRequest).value();
     }

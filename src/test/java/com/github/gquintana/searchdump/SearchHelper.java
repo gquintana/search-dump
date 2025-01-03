@@ -10,11 +10,11 @@ import java.util.Map;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SearchPortHelper {
+public class SearchHelper {
 
     private final String index;
 
-    public SearchPortHelper(String index) {
+    public SearchHelper(String index) {
         this.index = index;
     }
 
@@ -85,7 +85,7 @@ public class SearchPortHelper {
 
     public void createList(SearchWriter port) {
         for (int i = 0; i < 3; i++) {
-            SearchPortHelper helperi = new SearchPortHelper(index + "-" + i);
+            SearchHelper helperi = new SearchHelper(index + "-" + i);
             helperi.create(port);
         }
     }

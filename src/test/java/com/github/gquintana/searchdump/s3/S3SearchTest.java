@@ -1,6 +1,6 @@
 package com.github.gquintana.searchdump.s3;
 
-import com.github.gquintana.searchdump.core.AbstractAdapterTest;
+import com.github.gquintana.searchdump.core.AbstractSearchTest;
 import org.junit.jupiter.api.BeforeAll;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,8 +12,8 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
 
 @Testcontainers
-class S3SearchAdapterTest extends AbstractAdapterTest<S3SearchWriter, S3SearchReader> {
-    static final Logger LOGGER = LoggerFactory.getLogger(S3SearchAdapterTest.class);
+class S3SearchTest extends AbstractSearchTest<S3SearchWriter, S3SearchReader> {
+    static final Logger LOGGER = LoggerFactory.getLogger(S3SearchTest.class);
     @Container
     static final LocalStackContainer container = new LocalStackContainer("0.11.3")
             .withServices(LocalStackContainer.Service.S3);

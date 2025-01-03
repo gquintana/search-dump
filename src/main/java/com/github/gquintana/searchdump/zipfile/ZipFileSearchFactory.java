@@ -2,12 +2,12 @@ package com.github.gquintana.searchdump.zipfile;
 
 import com.github.gquintana.searchdump.configuration.Configuration;
 import com.github.gquintana.searchdump.configuration.MissingConfigurationException;
-import com.github.gquintana.searchdump.core.SearchAdapterFactory;
+import com.github.gquintana.searchdump.core.SearchFactory;
 
 import java.io.File;
 
 
-public class ZipFileAdapterFactory implements SearchAdapterFactory {
+public class ZipFileSearchFactory implements SearchFactory {
     @Override
     public ZipFileSearchReader createReader(Configuration configuration) {
         return ZipFileSearchReader.read(
@@ -19,7 +19,7 @@ public class ZipFileAdapterFactory implements SearchAdapterFactory {
     public ZipFileSearchWriter createWriter(Configuration configuration) {
         return ZipFileSearchWriter.write(
                 new File(configuration.getString("writer.file").orElseThrow(() -> new MissingConfigurationException("writer.file"))),
-                configuration.getInt("writer.file-size").orElse(1000)
+                configuration.getInt("writer.file.size").orElse(1000)
         );
     }
 }

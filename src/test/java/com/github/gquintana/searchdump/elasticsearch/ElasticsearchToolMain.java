@@ -2,7 +2,7 @@ package com.github.gquintana.searchdump.elasticsearch;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.Main;
-import com.github.gquintana.searchdump.SearchPortHelper;
+import com.github.gquintana.searchdump.SearchHelper;
 
 public class ElasticsearchToolMain {
     public static void main(String[] args) {
@@ -26,7 +26,7 @@ public class ElasticsearchToolMain {
                 new ElasticsearchClientFactory("http://localhost:9200", "elastic", "elastic", true),
                 10, JsonMapper.builder().build())) {
             for (int i = 1; i < 3; i++) {
-                SearchPortHelper helper = new SearchPortHelper("test-" + i);
+                SearchHelper helper = new SearchHelper("test-" + i);
                 helper.createAndFill(writer);
                 writer.refreshIndex("test-" + i);
 

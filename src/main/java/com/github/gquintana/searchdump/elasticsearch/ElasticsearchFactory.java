@@ -3,9 +3,9 @@ package com.github.gquintana.searchdump.elasticsearch;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.configuration.Configuration;
 import com.github.gquintana.searchdump.configuration.MissingConfigurationException;
-import com.github.gquintana.searchdump.core.SearchAdapterFactory;
+import com.github.gquintana.searchdump.core.SearchFactory;
 
-public class ElasticsearchFactory implements SearchAdapterFactory {
+public class ElasticsearchFactory implements SearchFactory {
     private final JsonMapper jsonMapper;
 
     public ElasticsearchFactory(JsonMapper jsonMapper) {
@@ -25,8 +25,8 @@ public class ElasticsearchFactory implements SearchAdapterFactory {
     public ElasticsearchReader createReader(Configuration configuration) {
         return new ElasticsearchReader(
                 createClientFactory(configuration, "reader"),
-                configuration.getInt("reader.page-size").orElse(1000),
-                configuration.getString("reader.scroll-time").orElse("5m"),
+                configuration.getInt("reader.page.size").orElse(1000),
+                configuration.getString("reader.scroll.time").orElse("5m"),
                 jsonMapper
         );
     }
@@ -35,7 +35,7 @@ public class ElasticsearchFactory implements SearchAdapterFactory {
     public ElasticsearchWriter createWriter(Configuration configuration) {
         return new ElasticsearchWriter(
                 createClientFactory(configuration, "writer"),
-                configuration.getInt("writer.bulk-size").orElse(1000),
+                configuration.getInt("writer.bulk.size").orElse(1000),
                 jsonMapper
         );
     }

@@ -2,13 +2,13 @@ package com.github.gquintana.searchdump.s3;
 
 import com.github.gquintana.searchdump.configuration.Configuration;
 import com.github.gquintana.searchdump.configuration.MissingConfigurationException;
-import com.github.gquintana.searchdump.core.SearchAdapterFactory;
+import com.github.gquintana.searchdump.core.SearchFactory;
 
 
-public class S3AdapterFactory implements SearchAdapterFactory {
+public class S3SearchFactory implements SearchFactory {
     private S3ClientFactory createClientFactory(Configuration configuration, String prefix) {
         return new S3ClientFactory(
-                configuration.getString(prefix+".endpoint-url").orElse(null),
+                configuration.getString(prefix+".endpoint.url").orElse(null),
                 configuration.getString(prefix+".region").orElse(null));
     }
     @Override
@@ -26,7 +26,7 @@ public class S3AdapterFactory implements SearchAdapterFactory {
                 createClientFactory(configuration, "writer"),
                 configuration.getString("writer.bucket").orElseThrow(() -> new MissingConfigurationException("writer.bucket")),
                 configuration.getString("writer.key").orElseThrow(() -> new MissingConfigurationException("writer.key")),
-                configuration.getInt("writer.file-size").orElse(1000)
+                configuration.getInt("writer.file.size").orElse(1000)
         );
     }
 }

@@ -3,8 +3,8 @@ package com.github.gquintana.searchdump.elasticsearch;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.github.gquintana.searchdump.SearchPortHelper;
-import com.github.gquintana.searchdump.core.AbstractAdapterTest;
+import com.github.gquintana.searchdump.SearchHelper;
+import com.github.gquintana.searchdump.core.AbstractSearchTest;
 import com.github.gquintana.searchdump.zipfile.ZipFileSearchReader;
 import com.github.gquintana.searchdump.zipfile.ZipFileSearchWriter;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 @Testcontainers
-class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, ElasticsearchReader> {
+class ElasticsearchTest extends AbstractSearchTest<ElasticsearchWriter, ElasticsearchReader> {
     private static final String ELASTICSEARCH_USERNAME = "elastic";
     private static final String ELASTICSEARCH_PASSWORD = "Test.Adapter:1";
     @Container
@@ -49,7 +49,7 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
     @Test
     void copyToZipFile() {
         File zipFile = tempDir.resolve("test-12.zip").toFile();
-        SearchPortHelper helper = new SearchPortHelper("test-12");
+        SearchHelper helper = new SearchHelper("test-12");
         try (ElasticsearchWriter writer = createWriter()) {
             helper.createAndFill(writer);
             writer.refreshIndex("test-12");
@@ -66,7 +66,7 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
     @Test
     void copyFromZipFile() {
         File zipFile = tempDir.resolve("test-13.zip").toFile();
-        SearchPortHelper helper = new SearchPortHelper("test-13");
+        SearchHelper helper = new SearchHelper("test-13");
         try (ZipFileSearchWriter zipWriter = ZipFileSearchWriter.write(zipFile, 10)) {
             helper.createAndFill(zipWriter);
         }
@@ -83,7 +83,7 @@ class ElasticsearchAdapterTest extends AbstractAdapterTest<ElasticsearchWriter, 
     @Test
     void copyToAndFromZipFile() {
         File zipFile = tempDir.resolve("test-14.zip").toFile();
-        SearchPortHelper helper = new SearchPortHelper("test-14");
+        SearchHelper helper = new SearchHelper("test-14");
         try (ElasticsearchWriter writer = createWriter()) {
             helper.createAndFill(writer);
             writer.refreshIndex("test-14");

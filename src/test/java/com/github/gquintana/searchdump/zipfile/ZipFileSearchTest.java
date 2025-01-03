@@ -1,13 +1,13 @@
 package com.github.gquintana.searchdump.zipfile;
 
-import com.github.gquintana.searchdump.core.AbstractAdapterTest;
+import com.github.gquintana.searchdump.core.AbstractSearchTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Path;
 
-class ZipFileSearchAdapterTest extends AbstractAdapterTest<ZipFileSearchWriter, ZipFileSearchReader> {
+class ZipFileSearchTest extends AbstractSearchTest<ZipFileSearchWriter, ZipFileSearchReader> {
     @TempDir
     Path tempDir;
 

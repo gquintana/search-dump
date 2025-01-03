@@ -1,9 +1,9 @@
 package com.github.gquintana.searchdump.core;
 
-import com.github.gquintana.searchdump.SearchPortHelper;
+import com.github.gquintana.searchdump.SearchHelper;
 import org.junit.jupiter.api.Test;
 
-public abstract class AbstractAdapterTest<W extends SearchWriter, R extends SearchReader> {
+public abstract class AbstractSearchTest<W extends SearchWriter, R extends SearchReader> {
     protected abstract R createReader();
 
     protected abstract W createWriter();
@@ -13,7 +13,7 @@ public abstract class AbstractAdapterTest<W extends SearchWriter, R extends Sear
 
     @Test
     void writeAndRead() {
-        SearchPortHelper helper = new SearchPortHelper("test-1");
+        SearchHelper helper = new SearchHelper("test-1");
         try (W writer = createWriter()) {
             helper.createAndFill(writer);
             refreshIndex(writer, "test-1");
@@ -25,7 +25,7 @@ public abstract class AbstractAdapterTest<W extends SearchWriter, R extends Sear
 
     @Test
     void writeWhenNoDocuments() {
-        SearchPortHelper helper = new SearchPortHelper("test-no-docs");
+        SearchHelper helper = new SearchHelper("test-no-docs");
         try (W writer = createWriter()) {
             helper.createAndFill(writer, 0);
             refreshIndex(writer, "test-no-docs");
@@ -36,7 +36,7 @@ public abstract class AbstractAdapterTest<W extends SearchWriter, R extends Sear
     }
     @Test
     void listIndexes() {
-        SearchPortHelper helper = new SearchPortHelper("list");
+        SearchHelper helper = new SearchHelper("list");
         try (W writer = createWriter()) {
             helper.createList(writer);
         }
@@ -46,7 +46,7 @@ public abstract class AbstractAdapterTest<W extends SearchWriter, R extends Sear
     }
     @Test
     void copyTo() {
-        SearchPortHelper helper = new SearchPortHelper("test-2");
+        SearchHelper helper = new SearchHelper("test-2");
         try (W writer = createWriter()) {
             helper.createAndFill(writer);
             refreshIndex(writer, "test-2");
@@ -61,7 +61,7 @@ public abstract class AbstractAdapterTest<W extends SearchWriter, R extends Sear
 
     @Test
     void copyFrom() {
-        SearchPortHelper helper = new SearchPortHelper("test-3");
+        SearchHelper helper = new SearchHelper("test-3");
         FakeSearchWriter fakeWriter = new FakeSearchWriter();
         helper.createAndFill(fakeWriter);
         FakeSearchReader fakeReader = fakeWriter.toReader();
@@ -76,7 +76,7 @@ public abstract class AbstractAdapterTest<W extends SearchWriter, R extends Sear
 
     @Test
     void copyToAndFrom() {
-        SearchPortHelper helper = new SearchPortHelper("test-4");
+        SearchHelper helper = new SearchHelper("test-4");
         try (W writer = createWriter()) {
             helper.createAndFill(writer);
             refreshIndex(writer, "test-4");

@@ -1,26 +1,20 @@
 package com.github.gquintana.searchdump;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.github.gquintana.searchdump.configuration.ArgsConfiguration;
-import com.github.gquintana.searchdump.configuration.CompositeConfiguration;
-import com.github.gquintana.searchdump.configuration.Configuration;
-import com.github.gquintana.searchdump.configuration.EnvironmentConfiguration;
-import com.github.gquintana.searchdump.configuration.MissingConfigurationException;
-import com.github.gquintana.searchdump.configuration.PropertiesConfiguration;
-import com.github.gquintana.searchdump.core.SearchAdapterFactory;
+import com.github.gquintana.searchdump.configuration.*;
 import com.github.gquintana.searchdump.core.SearchCopier;
+import com.github.gquintana.searchdump.core.SearchFactory;
 import com.github.gquintana.searchdump.core.SearchReader;
 import com.github.gquintana.searchdump.core.SearchWriter;
 import com.github.gquintana.searchdump.elasticsearch.ElasticsearchFactory;
 import com.github.gquintana.searchdump.opensearch.OpenSearchFactory;
-import com.github.gquintana.searchdump.s3.S3AdapterFactory;
-import com.github.gquintana.searchdump.zipfile.ZipFileAdapterFactory;
+import com.github.gquintana.searchdump.s3.S3SearchFactory;
+import com.github.gquintana.searchdump.zipfile.ZipFileSearchFactory;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 public class Main {
     public static void main(String... args) {
@@ -29,8 +23,8 @@ public class Main {
         try (SearchReader reader = createReader(configuration, jsonMapper);
              SearchWriter writer = createWriter(configuration, jsonMapper)) {
             SearchCopier copier = new SearchCopier(reader, writer,
-                    configuration.getBoolean("index.skip-failed").orElse(Boolean.TRUE),
-                    configuration.getBoolean("index.skip-existing").orElse(Boolean.TRUE));
+                    configuration.getBoolean("index.skip.failed").orElse(Boolean.TRUE),
+                    configuration.getBoolean("index.skip.existing").orElse(Boolean.TRUE));
             List<String> indices = configuration.getStrings("index.names");
             if (indices.isEmpty()) {
                 throw new MissingConfigurationException("index.names");
@@ -64,12 +58,12 @@ public class Main {
         return createFactory(type, jsonMapper).createReader(configuration);
     }
 
-    private static SearchAdapterFactory createFactory(String type, JsonMapper jsonMapper) {
+    private static SearchFactory createFactory(String type, JsonMapper jsonMapper) {
         return switch (type) {
-            case "zip" -> new ZipFileAdapterFactory();
+            case "zip" -> new ZipFileSearchFactory();
             case "elasticsearch" -> new ElasticsearchFactory(jsonMapper);
             case "opensearch" -> new OpenSearchFactory(jsonMapper);
-            case "s3" -> new S3AdapterFactory();
+            case "s3" -> new S3SearchFactory();
             default -> throw new IllegalArgumentException("Unknown type " + type);
         };
     }

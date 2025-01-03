@@ -2,7 +2,7 @@ package com.github.gquintana.searchdump.opensearch;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.Main;
-import com.github.gquintana.searchdump.SearchPortHelper;
+import com.github.gquintana.searchdump.SearchHelper;
 
 public class OpenSearchToolMain {
     public static void main(String[] args) {
@@ -25,7 +25,7 @@ public class OpenSearchToolMain {
         try (OpenSearchWriter writer = new OpenSearchWriter(
                 new OpenSearchClientFactory("https://localhost:9201", "admin", "admin", false),
                 10, JsonMapper.builder().build())) {
-            SearchPortHelper helper = new SearchPortHelper("test-1");
+            SearchHelper helper = new SearchHelper("test-1");
             helper.createAndFill(writer);
             writer.refreshIndex("test-1");
         }

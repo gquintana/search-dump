@@ -1,7 +1,7 @@
 package com.github.gquintana.searchdump.opensearch;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.github.gquintana.searchdump.core.AbstractAdapterTest;
+import com.github.gquintana.searchdump.core.AbstractSearchTest;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch.indices.DeleteIndexRequest;
 import org.opensearch.testcontainers.OpensearchContainer;
@@ -11,7 +11,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import java.io.IOException;
 
 @Testcontainers
-class OpenSearchAdapterTest extends AbstractAdapterTest<OpenSearchWriter, OpenSearchReader> {
+class OpenSearchTest extends AbstractSearchTest<OpenSearchWriter, OpenSearchReader> {
     @Container
     static final OpensearchContainer container = new OpensearchContainer("opensearchproject/opensearch:1.3.20");
     final JsonMapper jsonMapper = JsonMapper.builder().build();

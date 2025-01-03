@@ -1,6 +1,6 @@
 package com.github.gquintana.searchdump.core;
 
-import com.github.gquintana.searchdump.SearchPortHelper;
+import com.github.gquintana.searchdump.SearchHelper;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -80,7 +80,7 @@ class SearchCopierTest {
     private static @NotNull FakeSearchReader createFakeSearchReader(String ... indices) {
         FakeSearchWriter fakeWriter = new FakeSearchWriter();
         for (String index : indices) {
-            SearchPortHelper helper = new SearchPortHelper(index);
+            SearchHelper helper = new SearchHelper(index);
             helper.createAndFill(fakeWriter);
         }
         return fakeWriter.toReader();

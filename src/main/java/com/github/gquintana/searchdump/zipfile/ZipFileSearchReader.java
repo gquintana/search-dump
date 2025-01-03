@@ -1,6 +1,7 @@
 package com.github.gquintana.searchdump.zipfile;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.github.gquintana.searchdump.core.*;
 
@@ -14,6 +15,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ZipFileSearchReader implements SearchReader, QuietCloseable {
+    private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
     private final JsonMapper jsonMapper;
     private final ZipFile zipInputFile;
 
@@ -48,7 +50,7 @@ public class ZipFileSearchReader implements SearchReader, QuietCloseable {
     public SearchIndex getIndex(String name) {
         ZipEntry entry = zipInputFile.getEntry(name + "/index.json");
         try (InputStream inputStream = zipInputFile.getInputStream(entry)) {
-            Map<String, Object> index = jsonMapper.readValue(inputStream, Map.class);
+            Map<String, Object> index = jsonMapper.readValue(inputStream, MAP_TYPE_REF);
             return new SearchIndex((String) index.get("name"),
                     (Map<String, Object>) index.get("settings"),
                     (Map<String, Object>) index.get("mappings"),

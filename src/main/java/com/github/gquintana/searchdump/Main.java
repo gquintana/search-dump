@@ -24,7 +24,8 @@ public class Main {
              SearchWriter writer = createWriter(configuration, jsonMapper)) {
             SearchCopier copier = new SearchCopier(reader, writer,
                     configuration.getBoolean("index.skip.failed").orElse(Boolean.TRUE),
-                    configuration.getBoolean("index.skip.existing").orElse(Boolean.TRUE));
+                    configuration.getBoolean("index.skip.existing").orElse(Boolean.TRUE),
+                    configuration.getInt("index.partitions").orElse(1));
             List<String> indices = configuration.getStrings("index.names");
             if (indices.isEmpty()) {
                 throw new MissingConfigurationException("index.names");

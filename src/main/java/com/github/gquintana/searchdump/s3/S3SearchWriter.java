@@ -65,6 +65,16 @@ public class S3SearchWriter implements SearchWriter, QuietCloseable {
     }
 
     @Override
+    public SearchDocumentWriter writeDocuments(SearchDocumentPartition partition) {
+        return new S3SearchDocumentWriter(jsonMapper, s3Client, bucket, key, partition.index(), writeFileSize) {
+            @Override
+            protected int generateFileIndex() {
+                return super.generateFileIndex() * partition.partitionCount() + partition.partitionIndex();
+            }
+        };
+    }
+
+    @Override
     public void close() {
         s3Client.close();
     }

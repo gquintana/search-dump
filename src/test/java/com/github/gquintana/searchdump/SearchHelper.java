@@ -10,7 +10,7 @@ import java.util.Map;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class SearchHelper {
+public class SearchHelper<P extends SearchDocumentPartition> {
 
     private final String index;
 
@@ -48,11 +48,47 @@ public class SearchHelper {
 
     }
 
-    public void readAndCheck(SearchReader reader) {
+    public void readAndCheck(SearchReader<P> reader) {
         readAndCheck(reader, 15);
     }
 
-    public void readAndCheck(SearchReader reader, int docCount) {
+    public void readAndCheck(SearchReader<P> reader, int docCount) {
+        checkIndex(reader);
+        try (SearchDocumentReader docReader = reader.readDocuments(this.index)) {
+            List<SearchDocument> docs = new ArrayList<>();
+            docReader.forEachRemaining(docs::add);
+            checkDocuments(docs, docCount);
+        }
+    }
+
+    public void partitionedReadAndCheck(SearchReader<P> reader) {
+        partitionedReadAndCheck(reader, 2, 15);
+    }
+
+    public void partitionedReadAndCheck(SearchReader<P> reader, int partitionCount, int docCount) {
+        checkIndex(reader);
+        List<SearchDocument> docs = new ArrayList<>();
+        for (P partition : reader.splitDocuments(this.index, partitionCount)) {
+            try (SearchDocumentReader docReader = reader.readDocuments(partition)) {
+                docReader.forEachRemaining(docs::add);
+            }
+        }
+        checkDocuments(docs, docCount);
+    }
+
+    private void checkDocuments(List<SearchDocument> docs, int docCount) {
+        docs.sort(Comparator.comparing(SearchDocument::id));
+        assertEquals(docCount, docs.size());
+        for (int i = 0; i < docs.size(); i++) {
+            SearchDocument doc = docs.get(i);
+            assertEquals(String.format("id-%02d", i), doc.id());
+            assertEquals(this.index, doc.index());
+            assertEquals(i * 2, doc.source().get("age"));
+            assertEquals("Name " + i, doc.source().get("name"));
+        }
+    }
+
+    private void checkIndex(SearchReader<P> reader) {
         List<String> foundIndices = reader.listIndices(List.of(index));
         assertTrue(foundIndices.contains(index));
         SearchIndex index = reader.getIndex(this.index);
@@ -64,33 +100,24 @@ public class SearchHelper {
         Map<String, Object> indexMappings = (Map<String, Object>) index.mappings().get("properties");
         assertEquals(3, indexMappings.size());
         assertEquals(1, index.aliases().size());
-        try (SearchDocumentReader docReader = reader.readDocuments(this.index)) {
-            List<SearchDocument> docs = new ArrayList<>();
-            docReader.forEachRemaining(docs::add);
-            docs.sort(Comparator.comparing(SearchDocument::id));
-            assertEquals(docCount, docs.size());
-            for (int i = 0; i < docs.size(); i++) {
-                SearchDocument doc = docs.get(i);
-                assertEquals(String.format("id-%02d", i), doc.id());
-                assertEquals(this.index, doc.index());
-                assertEquals(i * 2, doc.source().get("age"));
-                assertEquals("Name " + i, doc.source().get("name"));
-            }
-        }
     }
 
-    public void copy(SearchReader reader, SearchWriter writer) {
-        new SearchCopier(reader, writer, false, false).copy(this.index);
+    public void copy(SearchReader<P> reader, SearchWriter writer) {
+        copy(reader, writer, 1);
+    }
+
+    public void copy(SearchReader<P> reader, SearchWriter writer, int partitionCount) {
+        new SearchCopier<P>(reader, writer, false, false, partitionCount).copy(this.index);
     }
 
     public void createList(SearchWriter port) {
         for (int i = 0; i < 3; i++) {
-            SearchHelper helperi = new SearchHelper(index + "-" + i);
+            SearchHelper<P> helperi = new SearchHelper<>(index + "-" + i);
             helperi.create(port);
         }
     }
 
-    public void listAndCheck(SearchReader port) {
+    public void listAndCheck(SearchReader<P> port) {
         List<String> indices = port.listIndices(List.of(index + "-*"));
         assertEquals(3, indices.size());
     }

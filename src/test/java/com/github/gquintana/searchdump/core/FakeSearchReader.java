@@ -1,9 +1,13 @@
 package com.github.gquintana.searchdump.core;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import org.jetbrains.annotations.NotNull;
 
-public class FakeSearchReader implements SearchReader {
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class FakeSearchReader implements SearchReader<FakeSearchDocumentPartition> {
     private final Map<String, SearchIndex> indices = new HashMap<>();
     private final List<SearchDocument> documents = new ArrayList<>();
 
@@ -52,6 +56,23 @@ public class FakeSearchReader implements SearchReader {
     }
     @Override
     public SearchDocumentReader readDocuments(String index) {
-        return new FakeSearchDocumentReader(this.documents.stream().filter(d -> d.index().equals(index)).iterator());
+        return new FakeSearchDocumentReader(streamDocuments(index).iterator());
+    }
+
+    private @NotNull Stream<SearchDocument> streamDocuments(String index) {
+        return this.documents.stream().filter(d -> d.index().equals(index));
+    }
+
+    @Override
+    public List<FakeSearchDocumentPartition> splitDocuments(String index, int partitionCount) {
+        final AtomicInteger partitionIndex = new AtomicInteger();
+        return ListSplitter.split(streamDocuments(index).toList(), partitionCount)
+                .stream().map(l -> new FakeSearchDocumentPartition(index, partitionIndex.getAndIncrement(), partitionCount, l))
+                .toList();
+    }
+
+    @Override
+    public SearchDocumentReader readDocuments(FakeSearchDocumentPartition partition) {
+        return new FakeSearchDocumentReader(partition.documents().iterator());
     }
 }

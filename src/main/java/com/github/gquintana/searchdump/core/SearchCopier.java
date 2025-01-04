@@ -4,23 +4,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-public class SearchCopier {
+public class SearchCopier<P extends SearchDocumentPartition> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchCopier.class);
-    private final SearchReader reader;
+    private final SearchReader<P> reader;
     private final SearchWriter writer;
     private final boolean skipFailed;
     private final boolean skipExisting;
+    private final int partitionCount;
 
-    public SearchCopier(SearchReader reader, SearchWriter writer, boolean skipFailed, boolean skipExisting) {
+    public SearchCopier(SearchReader<P> reader, SearchWriter writer, boolean skipFailed, boolean skipExisting, int partitionCount) {
         this.reader = reader;
         this.writer = writer;
         this.skipFailed = skipFailed;
         this.skipExisting = skipExisting;
+        this.partitionCount = partitionCount;
     }
 
     public void copy(List<String> indices) {
-        for(String index : reader.listIndices(indices)) {
+        for (String index : reader.listIndices(indices)) {
             copy(index);
         }
     }
@@ -33,7 +36,15 @@ public class SearchCopier {
                 LOGGER.warn("Index {} already exists: skipping", index);
                 return;
             }
-            copyDocuments(index);
+            if (partitionCount <= 1) {
+                copyDocuments(index);
+            } else {
+                List<P> documentPartitions = reader.splitDocuments(index, partitionCount);
+                CompletableFuture<Void>[] futures = documentPartitions.stream()
+                        .map(partition -> CompletableFuture.runAsync(() -> this.copyDocuments(partition)))
+                        .toArray(CompletableFuture[]::new);
+                CompletableFuture.allOf(futures).join();
+            }
         } catch (RuntimeException e) {
             LOGGER.warn("Index {} copy failed: {}", index, e.getMessage());
             if (!skipFailed) {
@@ -58,7 +69,7 @@ public class SearchCopier {
             long currentTimestamp = System.currentTimeMillis();
             long deltaTimestamp = currentTimestamp - this.timestamp();
             if (deltaTimestamp > 60000L) {
-                long docRate = (currentCount - documentCount)*1000/deltaTimestamp;
+                long docRate = (currentCount - documentCount) * 1000 / deltaTimestamp;
                 LOGGER.info("Wrote {} documents to index {}, {} docs/s", currentCount, index, docRate);
                 return new WriteReport(currentTimestamp, currentCount);
             } else {
@@ -66,11 +77,12 @@ public class SearchCopier {
             }
         }
     }
+
     private void copyDocuments(String index) {
         long documentCount = 0;
         WriteReport report = new WriteReport(System.currentTimeMillis(), 0);
-        try(SearchDocumentReader documentReader = reader.readDocuments(index);
-            SearchDocumentWriter documentWriter = writer.writeDocuments(index)
+        try (SearchDocumentReader documentReader = reader.readDocuments(index);
+             SearchDocumentWriter documentWriter = writer.writeDocuments(index)
         ) {
             while (documentReader.hasNext()) {
                 documentWriter.write(documentReader.next());
@@ -79,6 +91,22 @@ public class SearchCopier {
             }
             documentWriter.flush();
             LOGGER.info("Wrote {} documents to index {}", documentCount, index);
+        }
+    }
+
+    private void copyDocuments(P partition) {
+        long documentCount = 0;
+        WriteReport report = new WriteReport(System.currentTimeMillis(), 0);
+        try (SearchDocumentReader documentReader = reader.readDocuments(partition);
+             SearchDocumentWriter documentWriter = writer.writeDocuments(partition)
+        ) {
+            while (documentReader.hasNext()) {
+                documentWriter.write(documentReader.next());
+                documentCount++;
+                report = report.logIfNeeded(partition.index(), documentCount);
+            }
+            documentWriter.flush();
+            LOGGER.info("Wrote {} documents to index {}", documentCount, partition.index());
         }
     }
 }

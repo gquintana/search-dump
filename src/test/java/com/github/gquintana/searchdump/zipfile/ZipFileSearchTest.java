@@ -2,6 +2,8 @@ package com.github.gquintana.searchdump.zipfile;
 
 import com.github.gquintana.searchdump.core.AbstractSearchTest;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
@@ -23,5 +25,10 @@ class ZipFileSearchTest extends AbstractSearchTest<ZipFileSearchWriter, ZipFileS
 
     private @NotNull File createZipFile() {
         return tempDir.resolve("test.zip").toFile();
+    }
+
+    @Test
+    @Disabled // Not supported
+    void copyFromPartitioned() {
     }
 }

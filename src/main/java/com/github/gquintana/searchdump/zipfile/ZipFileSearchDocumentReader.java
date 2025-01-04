@@ -8,8 +8,8 @@ import com.github.gquintana.searchdump.core.TechnicalException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -20,16 +20,11 @@ public class ZipFileSearchDocumentReader implements SearchDocumentReader {
     private BufferedReader bufferedReader;
     private SearchDocument nextDocument;
 
-    public ZipFileSearchDocumentReader(JsonMapper jsonMapper, ZipFile zipFile, String index) {
+    public ZipFileSearchDocumentReader(JsonMapper jsonMapper, ZipFile zipFile, List<ZipEntry> zipEntries) {
         this.jsonMapper = jsonMapper;
         this.zipFile = zipFile;
         try {
-            this.zipEntryIterator = zipFile.stream()
-                    .filter(zipEntry ->
-                            zipEntry.getName().startsWith(index + "/documents-")
-                                    && zipEntry.getName().endsWith(".json"))
-                    .sorted(Comparator.comparing(ZipEntry::getName))
-                    .iterator();
+            this.zipEntryIterator = zipEntries.iterator();
             bufferedReader = nextZipEntry();
             nextDocument = nextDocument();
         } catch (IOException e) {

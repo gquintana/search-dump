@@ -73,12 +73,16 @@ public class S3SearchDocumentWriter implements SearchDocumentWriter {
         tempOutputStream.close();
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
-                .key(String.format("%s/%s/documents-%06d.json.gz", key, index, fileCount++))
+                .key(String.format("%s/%s/documents-%06d.json.gz", key, index, generateFileIndex()))
                 .build();
         s3Client.putObject(putObjectRequest, tempFile);
         Files.deleteIfExists(tempFile);
         tempFile = null;
         tempOutputStream = null;
+    }
+
+    protected int generateFileIndex() {
+        return fileCount++;
     }
 
     @Override

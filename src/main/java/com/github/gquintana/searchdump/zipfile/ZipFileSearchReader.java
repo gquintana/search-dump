@@ -8,13 +8,15 @@ import com.github.gquintana.searchdump.core.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-public class ZipFileSearchReader implements SearchReader, QuietCloseable {
+public class ZipFileSearchReader implements SearchReader<ZipFileSearchDocumentPartition>, QuietCloseable {
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
     private final JsonMapper jsonMapper;
     private final ZipFile zipInputFile;
@@ -62,13 +64,44 @@ public class ZipFileSearchReader implements SearchReader, QuietCloseable {
 
     @Override
     public SearchDocumentReader readDocuments(String index) {
-        return new ZipFileSearchDocumentReader(jsonMapper, zipInputFile, index);
+        List<ZipEntry> zipEntries = listDocumentEntries(index);
+        return new ZipFileSearchDocumentReader(jsonMapper, zipInputFile, zipEntries);
     }
 
     @Override
     public void close() {
         try {
             zipInputFile.close();
+        } catch (IOException e) {
+            throw new TechnicalException(e);
+        }
+    }
+
+    @Override
+    public List<ZipFileSearchDocumentPartition> splitDocuments(String index, int partitionCount) {
+        final AtomicInteger partitionIndex = new AtomicInteger();
+        return ListSplitter.split(listDocumentEntries(index), partitionCount).stream()
+                .map(l -> new ZipFileSearchDocumentPartition(index, partitionIndex.getAndIncrement(), partitionCount, l))
+                .toList();
+    }
+
+    private List<ZipEntry> listDocumentEntries(String index) {
+        return (List<ZipEntry>) zipInputFile.stream()
+                .filter(zipEntry ->
+                        zipEntry.getName().startsWith(index + "/documents-")
+                                && zipEntry.getName().endsWith(".json"))
+                .sorted(Comparator.comparing(ZipEntry::getName))
+                .toList();
+    }
+
+    @Override
+    public SearchDocumentReader readDocuments(ZipFileSearchDocumentPartition partition) {
+        try {
+            ZipFile zipClonedFile = new ZipFile(zipInputFile.getName());
+            List<ZipEntry> zipClonedEntries = partition.zipEntries().stream()
+                    .map(e -> zipClonedFile.getEntry(e.getName()))
+                    .toList();
+            return new ZipFileSearchDocumentReader(jsonMapper, zipClonedFile, zipClonedEntries);
         } catch (IOException e) {
             throw new TechnicalException(e);
         }

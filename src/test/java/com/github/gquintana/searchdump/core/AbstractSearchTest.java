@@ -24,6 +24,18 @@ public abstract class AbstractSearchTest<W extends SearchWriter, R extends Searc
     }
 
     @Test
+    void writeAndPartitionedRead() {
+        SearchHelper helper = new SearchHelper("test-1p");
+        try (W writer = createWriter()) {
+            helper.createAndFill(writer);
+            refreshIndex(writer, "test-1p");
+        }
+        try (R reader = createReader()) {
+            helper.partitionedReadAndCheck(reader);
+        }
+    }
+
+    @Test
     void writeWhenNoDocuments() {
         SearchHelper helper = new SearchHelper("test-no-docs");
         try (W writer = createWriter()) {
@@ -68,6 +80,21 @@ public abstract class AbstractSearchTest<W extends SearchWriter, R extends Searc
         try(W writer = createWriter()) {
             helper.copy(fakeReader, writer);
             refreshIndex(writer, "test-3");
+        }
+        try (R reader = createReader()) {
+            helper.readAndCheck(reader);
+        }
+    }
+
+    @Test
+    void copyFromPartitioned() {
+        SearchHelper helper = new SearchHelper("test-3p");
+        FakeSearchWriter fakeWriter = new FakeSearchWriter();
+        helper.createAndFill(fakeWriter);
+        FakeSearchReader fakeReader = fakeWriter.toReader();
+        try(W writer = createWriter()) {
+            helper.copy(fakeReader, writer, 2);
+            refreshIndex(writer, "test-3p");
         }
         try (R reader = createReader()) {
             helper.readAndCheck(reader);

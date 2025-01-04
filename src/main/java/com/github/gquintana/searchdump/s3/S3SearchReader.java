@@ -7,14 +7,17 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
-public class S3SearchReader implements SearchReader, QuietCloseable {
+public class S3SearchReader implements SearchReader<S3SearchDocumentPartition>, QuietCloseable {
     private final JsonMapper jsonMapper;
     private final S3Client s3Client;
     private final String bucket;
@@ -50,10 +53,6 @@ public class S3SearchReader implements SearchReader, QuietCloseable {
                 .toList();
     }
 
-    private static boolean containsObject(List<String> indices, String index) {
-        return true;
-    }
-
     @Override
     public SearchIndex getIndex(String name) {
         try (InputStream inputStream = s3Client.getObject(GetObjectRequest.builder().bucket(bucket).key(key + "/" + name + "/index.json").build())) {
@@ -67,13 +66,39 @@ public class S3SearchReader implements SearchReader, QuietCloseable {
         }
     }
 
+    private List<S3Object> listDocumentsS3Objects(String index) {
+        ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                .bucket(bucket)
+                .prefix(String.format("%s/%s/documents-", key, index))
+                .build();
+        ListObjectsV2Response listObjectsResponse = this.s3Client.listObjectsV2(listObjectsRequest);
+        return listObjectsResponse.contents().stream()
+                .filter(o -> o.key().endsWith(".json.gz"))
+                .sorted(Comparator.comparing(S3Object::key))
+                .toList();
+    }
+
     @Override
     public SearchDocumentReader readDocuments(String index) {
-        return new S3SearchDocumentReader(jsonMapper, s3Client, bucket, key, index);
+        return new S3SearchDocumentReader(jsonMapper, s3Client, bucket, listDocumentsS3Objects(index));
     }
 
     @Override
     public void close() {
         s3Client.close();
+    }
+
+    @Override
+    public List<S3SearchDocumentPartition> splitDocuments(String index, int partitionCount) {
+        final AtomicInteger partitionIndex = new AtomicInteger();
+        return ListSplitter.split(listDocumentsS3Objects(index), partitionCount)
+                .stream()
+                .map(o -> new S3SearchDocumentPartition(index, partitionIndex.getAndIncrement(), partitionCount, o))
+                .toList();
+    }
+
+    @Override
+    public SearchDocumentReader readDocuments(S3SearchDocumentPartition partition) {
+        return new S3SearchDocumentReader(jsonMapper, s3Client, bucket, partition.documentsS3Objects());
     }
 }

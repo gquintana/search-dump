@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class ElasticsearchReader implements SearchReader, QuietCloseable {
+public class ElasticsearchReader implements SearchReader<SearchDocumentPartition>, QuietCloseable {
     private static final TypeReference<Map<String, Object>> MAP_TYPE_REF = new TypeReference<>() {};
     private final int searchPageSize;
     private final String searchScrollTime;
@@ -101,5 +101,15 @@ public class ElasticsearchReader implements SearchReader, QuietCloseable {
         } catch (IOException e) {
             throw new TechnicalException(e);
         }
+    }
+
+    @Override
+    public List<SearchDocumentPartition> splitDocuments(String index, int partitionCount) {
+        return List.of(new SearchDocumentPartition(index, 0, 1));
+    }
+
+    @Override
+    public SearchDocumentReader readDocuments(SearchDocumentPartition partition) {
+        return readDocuments(partition.index());
     }
 }

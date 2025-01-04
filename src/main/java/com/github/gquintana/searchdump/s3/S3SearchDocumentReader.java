@@ -6,36 +6,30 @@ import com.github.gquintana.searchdump.core.SearchDocumentReader;
 import com.github.gquintana.searchdump.core.TechnicalException;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.*;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 public class S3SearchDocumentReader implements SearchDocumentReader {
     private final JsonMapper jsonMapper;
     private final S3Client s3Client;
     private final String bucket;
-    private Iterator<S3Object> s3ObjectIterator;
+    private final Iterator<S3Object> s3ObjectIterator;
     private BufferedReader bufferedReader;
     private SearchDocument nextDocument;
 
-    public S3SearchDocumentReader(JsonMapper jsonMapper, S3Client s3Client, String bucket, String key, String index) {
+    public S3SearchDocumentReader(JsonMapper jsonMapper, S3Client s3Client, String bucket, List<S3Object> documentsS3Objects) {
         this.jsonMapper = jsonMapper;
         this.s3Client = s3Client;
         this.bucket = bucket;
-        ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
-                .bucket(bucket)
-                .prefix(String.format("%s/%s/documents-", key, index))
-                .build();
-        ListObjectsV2Response listObjectsResponse = this.s3Client.listObjectsV2(listObjectsRequest);
-        s3ObjectIterator = listObjectsResponse.contents().stream()
-                .filter(o -> o.key().endsWith(".json.gz"))
-                .sorted(Comparator.comparing(S3Object::key))
-                .iterator();
+        this.s3ObjectIterator = documentsS3Objects.iterator();
         try {
             bufferedReader = nextS3Object();
             nextDocument = nextDocument();

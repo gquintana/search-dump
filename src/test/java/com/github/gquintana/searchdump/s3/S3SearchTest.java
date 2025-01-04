@@ -62,4 +62,5 @@ class S3SearchTest extends AbstractSearchTest<S3SearchWriter, S3SearchReader> {
             s3Client.deleteObjects(DeleteObjectsRequest.builder().bucket(TEST_BUCKET).delete(Delete.builder().objects(ids).build()).build());
         }
     }
+
 }

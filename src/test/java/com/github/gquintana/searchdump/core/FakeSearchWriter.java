@@ -4,7 +4,7 @@ import java.util.*;
 
 public class FakeSearchWriter implements SearchWriter {
     private final Map<String, SearchIndex> indices = new HashMap<>();
-    private final List<SearchDocument> documents = new ArrayList<>();
+    private final List<SearchDocument> documents = Collections.synchronizedList(new ArrayList<>());
     private Fail fail;
 
     private record Fail(String index, int pos) {

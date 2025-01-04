@@ -16,6 +16,7 @@ Elasticsearch &amp; OpenSearch dump tool.
 | --index-names         | index.names         | INDEX_NAMES         |         | foo,bar*                        | Coma separated list of index names, or index names globs. Example:  |
 | --index-skip-failed   | index.skip.failed   | INDEX_SKIP_FAILED   | true    | true false                      | When an index copy fails, continue with next one or stop            |
 | --index-skip-existing | index.skip.existing | INDEX_SKIP_EXISTING | true    | true false                      | When an index already exists, insert data or skip index             |
+| --index-partitions    | index.partitions    | INDEX_PARTITIONS    | 1       |                                 | Copy documents in parallel using multiples threads and partitions   |
 | --reader-type         | reader.type         | READER_TYPE         |         | elasticsearch opensearch zip s3 | Where data should be read from                                      |
 | --writer-type         | writer.type         | WRITER_TYPE         |         | elasticsearch opensearch zip s3 | Where data should be written to                                     |
 

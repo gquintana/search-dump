@@ -46,8 +46,9 @@ public class SearchCopier<P extends SearchDocumentPartition> {
                 CompletableFuture.allOf(futures).join();
             }
         } catch (RuntimeException e) {
-            LOGGER.warn("Index {} copy failed: {}", index, e.getMessage());
-            if (!skipFailed) {
+            if (skipFailed) {
+                LOGGER.warn("Index {} copy failed. Skipping", index, e);
+            } else {
                 throw e;
             }
         }

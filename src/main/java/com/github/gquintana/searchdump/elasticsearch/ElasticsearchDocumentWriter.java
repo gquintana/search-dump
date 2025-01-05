@@ -4,9 +4,11 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.CreateOperation;
+import com.github.gquintana.searchdump.core.Retrier;
 import com.github.gquintana.searchdump.core.SearchDocument;
 import com.github.gquintana.searchdump.core.SearchDocumentWriter;
 import com.github.gquintana.searchdump.core.TechnicalException;
+import org.opensearch.client.ResponseException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +20,16 @@ public class ElasticsearchDocumentWriter implements SearchDocumentWriter {
     private final String index;
     private final int bulkSize;
     private final List<BulkOperation> bulkOperations;
+    private final Retrier retrier = new Retrier(5, 1000L) {
+        @Override
+        protected boolean isRetriableException(Exception e) {
+            if (e instanceof ResponseException responseException) {
+                // 429 Too Many Requests
+                return responseException.getResponse().getStatusLine().getStatusCode() == 429;
+            }
+            return false;
+        }
+    };
 
     public ElasticsearchDocumentWriter(ElasticsearchClient client, String index, int bulkSize) {
         this.client = client;
@@ -45,7 +57,9 @@ public class ElasticsearchDocumentWriter implements SearchDocumentWriter {
             return;
         }
         try {
-            client.bulk(new BulkRequest.Builder().index(this.index).operations(bulkOperations).build());
+            retrier.retry(() ->
+                client.bulk(new BulkRequest.Builder().index(this.index).operations(bulkOperations).build())
+            );
             this.bulkOperations.clear();
         } catch (IOException e) {
             throw new TechnicalException(e);
